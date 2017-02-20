@@ -1,2 +1,0 @@
-# RobotRS
-WPILib Rust implementation
