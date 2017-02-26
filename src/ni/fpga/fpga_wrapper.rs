@@ -1,6 +1,2 @@
-use self::fpga_constants;
-use self::fpga_types;
-
-pub mod fpga_wrapper {
-    
-}
+use ni::fpga::fpga_constants;
+use ni::fpga::fpga_types;

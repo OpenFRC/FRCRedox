@@ -6,3 +6,10 @@
 # More information here http://doc.crates.io/guide.html#cargotoml-vs-cargolock
 Cargo.lock
 .idea/workspace.xml
+.idea/RobotRS.iml
+.idea/dictionaries/gamed.xml
+.idea/libraries/Cargo__RobotRS_.xml
+.idea/libraries/Rust__RobotRS_.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml

@@ -2,3 +2,7 @@
 name = "FRCRedox"
 version = "0.0.1"
 authors= ["OpenFRC Initiative"]
+build = "build.rs"
+[lib]
+name = "FRCRedox"
+path = "src/lib.rs"
