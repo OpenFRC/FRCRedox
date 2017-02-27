@@ -7,12 +7,19 @@ before_install:
   - curl https://sh.rustup.rs -sSf > rustup.sh
   - chmod +x rustup.sh
   - ./rustup.sh -y
+  - cargo install cargo-travis && export PATH=$HOME/.cargo/bin:$PATH
 
 addons:
   apt:
     sources:
       - sourceline: 'ppa:wpilib/toolchain'
+      - kalakris-cmake
     packages:
+      - libcurl4-openssl-dev
+      - libelf-dev
+      - libdw-dev
+      - binutils-dev
+      - cmake
       - frc-toolchain
 
 install:
@@ -30,6 +37,8 @@ matrix:
     - rust: nightly
 
 script:
-   - cargo build --verbose
-   - cargo build --verbose --target=arm-unknown-linux-gnueabi
-#  - cargo test --verbose --target=arm-unknown-linux-gnueabi
+   - cargo build --verbose && cargo test && cargo bench
+   - cargo build --verbose --target=arm-unknown-linux-gnueabi && cargo test --verbose --target=arm-unknown-linux-gnueabi && cargo bench --verbose --target=arm-unknown-linux-gnueabi
+
+after_success:
+  - cargo coveralls

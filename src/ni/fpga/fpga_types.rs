@@ -17,6 +17,7 @@ pub type uint32_t = u32;
 pub type int64_t = i64;
 pub type uint64_t = u64;
 
+pub type c_string = *c_char;
 
 // NiFpga Types. Will be cleaned up later
 pub type NiFpga_Bool = uint8_t;
@@ -87,7 +88,3 @@ pub enum NiFpga_Irq {
 }
 
 type NiFpga_IrqContext = *mut ::std::os::raw::c_void;
-extern {
-    fn NiFpga_Initialize() -> NiFpga_Status;
-    fn NiFpga_Finalize() -> NiFpga_Status;
-}
