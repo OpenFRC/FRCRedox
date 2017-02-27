@@ -2,3 +2,6 @@
 name = "FRCRedox"
 version = "0.0.1"
 authors= ["OpenFRC Initiative"]
+
+[dependencies]
+futures = "^0.1"
