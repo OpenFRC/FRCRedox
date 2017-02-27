@@ -31,4 +31,4 @@ matrix:
 
 script:
   - cargo build --verbose --target=arm-unknown-linux-gnueabi
-  - cargo build --verbose --example test_robot --target=arm-unknown-linux-gnueabi
+  - cargo test --verbose --target=arm-unknown-linux-gnueabi
