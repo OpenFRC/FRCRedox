@@ -1,4 +1,3 @@
-use std::boxed::FnBox;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{channel, Sender, Receiver};
 use std::sync::Arc;
@@ -15,6 +14,12 @@ pub trait Command {
 
     ///Calls the command on the hardware thread.
     fn execute(self, hw: &mut HardwareContext) -> Result<Self::Output, HardwareError>;
+}
+
+//This basically simulates a Box<FnOnce(&mut HardwareContext)>
+//Unfortunately, Box<FnOnce(&mut HardwareContext)>, doesn't work yet and BoxFn is unstable
+struct CommandWithReturn {
+    func: Box<FnMut(&mut HardwareContext) + Send>
 }
 
 ///An error resulting from interaction with the hardware.
@@ -50,7 +55,24 @@ pub struct HardwareContext;
 ///The object used for communicating with the HardwareContext from another thread.
 #[derive(Clone)]
 pub struct CommandSender {
-    send: Sender<Box<FnBox(&mut HardwareContext) + Send>>
+    send: Sender<CommandWithReturn>
+}
+
+impl CommandWithReturn {
+    fn new<F: FnOnce(&mut HardwareContext) + Send + 'static>(func: F) -> CommandWithReturn {
+        //ugly hack borrowed from
+        //https://github.com/stbuehler/rust-boxfnonce/blob/master/src/macros.rs
+        let mut func = Some(func);
+        CommandWithReturn {
+            func: Box::new(move |hw: &mut HardwareContext| {
+                func.take().unwrap()(hw)
+            })
+        }
+    }
+
+    fn execute(mut self, hw: &mut HardwareContext) {
+        (*self.func)(hw)
+    }
 }
 
 impl<C: Command> CommandFuture<C> {
@@ -122,7 +144,7 @@ impl CommandSender {
     ///Sends a command to the hardware thread and returns a future for the return value.
     fn run<C: Command + Send + 'static>(&self, command: C) -> CommandFuture<C> {
         let (future, ret) = CommandFuture::new();
-        self.send.send(Box::new(move |hardware: &mut HardwareContext| {
+        self.send.send(CommandWithReturn::new(move |hardware: &mut HardwareContext| {
             ret.set(command.execute(hardware));
         }));
         future
@@ -134,12 +156,12 @@ impl CommandSender {
 ///This will return a `CommandSender` for communicating with the hardware thread, which can be
 ///cloned any number of times.
 fn spawn_hardware_thread() -> CommandSender {
-    let (tx_command, rx_command) = channel::<Box<FnBox(&mut HardwareContext) + Send>>();
+    let (tx_command, rx_command) = channel::<CommandWithReturn>();
     thread::spawn(move || {
         let mut hardware = HardwareContext;
 
         for cmd in rx_command.iter() {
-            cmd.call_box((&mut hardware,));
+            cmd.execute(&mut hardware);
         }
     });
     CommandSender {
