@@ -7,7 +7,7 @@ before_install:
   - curl https://sh.rustup.rs -sSf > rustup.sh
   - chmod +x rustup.sh
   - ./rustup.sh -y
-  - cargo install cargo-travis && export PATH=$HOME/.cargo/bin:$PATH
+  #- cargo install cargo-travis && export PATH=$HOME/.cargo/bin:$PATH
 
 addons:
   apt:
@@ -37,13 +37,9 @@ matrix:
   allow_failures:
     - rust: nightly
 
-before_script:
-  - cargo install cargo-travis && export PATH=$HOME/.cargo/bin:$PATH
+#before_script:
+#  - cargo install cargo-travis && export PATH=$HOME/.cargo/bin:$PATH
 
 script:
   - cargo build --verbose
   - cargo build --verbose --target=arm-unknown-linux-gnueabi
-  - sh ./test.sh
-
-#after_success:
-#  - cargo coveralls --verbose --target=arm-unknown-linux-gnueabi
