@@ -1,9 +1,8 @@
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{channel, Sender, Receiver};
 use std::sync::Arc;
-use std::cell::UnsafeCell;
 use std::thread;
 use futures::{Future, Poll, Async};
+use futures::sync::oneshot;
 
 ///A command which interfaces with the hardware on the hardware thread.
 ///
@@ -13,7 +12,7 @@ pub trait Command {
     type Output: Send;
 
     ///Calls the command on the hardware thread.
-    fn execute(self, hw: &mut HardwareContext) -> Result<Self::Output, HardwareError>;
+    fn execute(self, hw: &mut HardwareContext) -> Result<Self::Output>;
 }
 
 //This basically simulates a Box<FnOnce(&mut HardwareContext)>
@@ -22,27 +21,24 @@ struct CommandWithReturn {
     func: Box<FnMut(&mut HardwareContext) + Send>
 }
 
-///An error resulting from interaction with the hardware.
-#[derive(Clone, Debug)]
-pub enum HardwareError {
-    Dummy
-}
-
-struct CommandReturn<C: Command> {
-    data: Arc<UnsafeCell<Option<Result<C::Output, HardwareError>>>>,
-    is_finished: Arc<AtomicBool>
+error_chain! {
+    errors {
+        HardwareThreadCrashed {
+            description("the hardware thread has crashed")
+            display("the hardware thread has crashed")
+        }
+        Unknown {
+            description("unknown error")
+            display("unknown error")
+        }
+    }
 }
 
 ///The future used on the calling thread to get the return value from a command.
 ///
-///A `CommandReturn` on the hardware thread will have an `UnsafeCell` for `data`, but data races
-///are prevented because once `is_finished` is set to `true`, ithe hardware thread is not allowed
-///to write a second time. `CommandFuture` will not attempt to read from `data` until `is_finished`
-///is set.
-pub struct CommandFuture<C: Command> {
-    data: Arc<UnsafeCell<Option<Result<C::Output, HardwareError>>>>,
-    is_finished: Arc<AtomicBool>
-}
+///This is really just a wrapper around `futures::sync::oneshot::Receiver` which converts the
+///error into something more meaningful.
+pub struct CommandFuture<C: Command>(oneshot::Receiver<Result<C::Output>>);
 
 ///The state information stored on the hardware thread.
 ///
@@ -75,79 +71,37 @@ impl CommandWithReturn {
     }
 }
 
-impl<C: Command> CommandFuture<C> {
-    ///Initializes a new future.
-    ///
-    ///This will return both the future as well as the `CommandReturn` which should
-    ///be passed to the hardware thread.
-    fn new() -> (CommandFuture<C>, CommandReturn<C>) {
-        let mut data = Arc::new(UnsafeCell::new(None));
-        let is_finished = Arc::new(AtomicBool::new(false));
-        let ret = CommandReturn {
-            data: data.clone(),
-            is_finished: is_finished.clone()
-        };
-        let future = CommandFuture {
-            data: data,
-            is_finished: is_finished
-        };
-        (future, ret)
-    }
-}
-
-impl<C: Command> Future for CommandFuture<C> where C::Output: Clone {
+impl<C: Command> Future for CommandFuture<C> {
     type Item = C::Output;
 
-    type Error = HardwareError; //TODO: real error handling!
+    type Error = Error;
 
-    //TODO: it might be better if it was returning a reference rather than cloning the output
-    //I don't know of a way to do that though because Self::Item needs to have a lifetime then
-    fn poll(&mut self) -> Poll<C::Output, HardwareError> {
-        if self.is_finished.load(Ordering::Relaxed) {
-            unsafe {
-                (*self.data.get()).clone().unwrap().map(Async::Ready)
-            }
-        }
-        else {
-            Ok(Async::NotReady)
+    fn poll(&mut self) -> Poll<C::Output, Error> {
+        match self.0.poll() {
+            Ok(Async::Ready(Ok(result))) => Ok(Async::Ready(result)),
+            Ok(Async::Ready(Err(error))) => Err(error),
+            Ok(Async::NotReady) => Ok(Async::NotReady),
+            Err(_) => Err(ErrorKind::HardwareThreadCrashed.into())
         }
     }
 
-    fn wait(self) -> Result<C::Output, HardwareError> {
-        while !self.is_finished.load(Ordering::Relaxed) {
-            thread::sleep_ms(5);
+    fn wait(self) -> Result<C::Output> {
+        match self.0.wait() {
+            Ok(Ok(result)) => Ok(result),
+            Ok(Err(error)) => Err(error),
+            Err(_) => Err(ErrorKind::HardwareThreadCrashed.into())
         }
-        unsafe {
-            (*self.data.get()).clone().unwrap()
-        }
-    }
-}
-
-//This is needed because `UnsafeCell` is not Send by default.
-//It is Ok for the reasons described above.
-unsafe impl<C: Command> Send for CommandReturn<C> { }
-
-impl<C: Command> CommandReturn<C> {
-    ///Sets the return value for the command.
-    ///
-    ///This consumes the `CommandReturn` so that the return value cannot be set multiple times.
-    fn set(mut self, value: Result<C::Output, HardwareError>) {
-        unsafe {
-            *self.data.get() = Some(value);
-        }
-        //set the flag that this command is complete
-        self.is_finished.store(true, Ordering::Relaxed);
     }
 }
 
 impl CommandSender {
     ///Sends a command to the hardware thread and returns a future for the return value.
     fn run<C: Command + Send + 'static>(&self, command: C) -> CommandFuture<C> {
-        let (future, ret) = CommandFuture::new();
+        let (sender, future) = oneshot::channel();
         self.send.send(CommandWithReturn::new(move |hardware: &mut HardwareContext| {
-            ret.set(command.execute(hardware));
+            sender.complete(command.execute(hardware));
         }));
-        future
+        CommandFuture(future)
     }
 }
 
@@ -178,7 +132,7 @@ mod test {
     impl Command for DummyCommand {
         type Output = u32;
 
-        fn execute(self, hw: &mut HardwareContext) -> Result<u32, HardwareError> {
+        fn execute(self, hw: &mut HardwareContext) -> Result<u32> {
             Ok(42)
         }
     }
@@ -187,7 +141,7 @@ mod test {
     impl Command for DummySlowCommand {
         type Output = u32;
 
-        fn execute(self, hw: &mut HardwareContext) -> Result<u32, HardwareError> {
+        fn execute(self, hw: &mut HardwareContext) -> Result<u32> {
             thread::sleep_ms(500);
             Ok(43)
         }
@@ -198,8 +152,8 @@ mod test {
     impl Command for DummyErrorCommand {
         type Output = u32;
 
-        fn execute(self, hw: &mut HardwareContext) -> Result<u32, HardwareError> {
-            Err(HardwareError::Dummy)
+        fn execute(self, hw: &mut HardwareContext) -> Result<u32> {
+            Err(ErrorKind::Unknown.into())
         }
     }
 

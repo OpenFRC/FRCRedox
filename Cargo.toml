@@ -5,6 +5,7 @@ authors = ["OpenFRC Initiative"]
 
 [dependencies]
 futures = "^0.1"
+error-chain = "^0.10"
 
 [lib]
 name = "frcredox"
