@@ -28,21 +28,24 @@ pub type NiFpga_Session = uint32_t;
 #[repr(u32)]
 #[derive(Debug)]
 pub enum NiFpga_OpenAttribute {
-    NiFpga_OpenAttribute_NoRun = 1
+    NiFpga_OpenAttribute_NoRun = 1,
+    Dummy
 }
 
 #[derive(Copy, Clone)]
 #[repr(u32)]
 #[derive(Debug)]
 pub enum NiFpga_CloseAttribute {
-    NiFpga_CloseAttribute_NoResetIfLastSession = 1
+    NiFpga_CloseAttribute_NoResetIfLastSession = 1,
+    Dummy
 }
 
 #[derive(Copy, Clone)]
 #[repr(u32)]
 #[derive(Debug)]
 pub enum NiFpga_RunAttribute {
-    NiFpga_RunAttribute_WaitUntilDone = 1
+    NiFpga_RunAttribute_WaitUntilDone = 1,
+    Dummy
 }
 
 #[derive(Copy, Clone)]
