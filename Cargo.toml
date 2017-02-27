@@ -5,3 +5,8 @@ authors= ["OpenFRC Initiative"]
 
 [dependencies]
 futures = "^0.1"
+build = "build.rs"
+
+[lib]
+name = "frcredox"
+path = "src/lib.rs"
