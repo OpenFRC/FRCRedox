@@ -38,9 +38,7 @@ matrix:
     - rust: nightly
 
 before_script:
-  - |
-      cargo install cargo-travis &&
-      export PATH=$HOME/.cargo/bin:$PATH
+  - cargo install cargo-travis && export PATH=$HOME/.cargo/bin:$PATH
 
 script:
   - cargo build --verbose
