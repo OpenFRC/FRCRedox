@@ -37,8 +37,8 @@ matrix:
     - rust: nightly
 
 script:
-   - cargo build --verbose && cargo test && cargo bench
-   - cargo build --verbose --target=arm-unknown-linux-gnueabi && cargo test --verbose --target=arm-unknown-linux-gnueabi && cargo bench --verbose --target=arm-unknown-linux-gnueabi
+   - cargo build --verbose #&& cargo test && cargo bench
+   - cargo build --verbose --target=arm-unknown-linux-gnueabi #&& cargo test --verbose --target=arm-unknown-linux-gnueabi && cargo bench --verbose --target=arm-unknown-linux-gnueabi
 
 after_success:
-  - cargo coveralls
+  - cargo coveralls --no-run

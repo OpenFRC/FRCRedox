@@ -17,7 +17,7 @@ pub type uint32_t = u32;
 pub type int64_t = i64;
 pub type uint64_t = u64;
 
-pub type c_string = *c_char;
+//pub type c_string = *c_char;
 
 // NiFpga Types. Will be cleaned up later
 pub type NiFpga_Bool = uint8_t;
