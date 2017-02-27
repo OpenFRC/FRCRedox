@@ -16,3 +16,6 @@ Cargo.lock
 .idea/vcs.xml
 
 *.swp
+
+roborio.img
+/linux/
