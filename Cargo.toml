@@ -1,7 +1,12 @@
 [package]
 name = "FRCRedox"
 version = "0.0.1"
-authors= ["OpenFRC Initiative"]
+authors = ["OpenFRC Initiative"]
 
 [dependencies]
 futures = "^0.1"
+
+[lib]
+name = "frcredox"
+path = "src/lib.rs"
+build = "build.rs"
