@@ -42,4 +42,4 @@ matrix:
 
 script:
   - cargo build --verbose
-  - cargo build --verbose --target=arm-unknown-linux-gnueabi
+  - env CC="arm-frc-linux-gnueabi-gcc" cargo build --verbose --target=arm-unknown-linux-gnueabi

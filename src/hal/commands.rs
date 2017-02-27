@@ -1,22 +1,21 @@
 use std::sync::mpsc::{channel, Sender, Receiver};
-use std::sync::Arc;
 use std::thread;
 use futures::{Future, Poll, Async};
 use futures::sync::oneshot;
 
-///A command which interfaces with the hardware on the hardware thread.
+/// A command which interfaces with the hardware on the hardware thread.
 ///
-///Commands may or may not pass back data to the calling thread.
+/// Commands may or may not pass back data to the calling thread.
 pub trait Command {
-    ///The optional return type of the command.
+    /// The optional return type of the command.
     type Output: Send;
 
-    ///Calls the command on the hardware thread.
+    /// Calls the command on the hardware thread.
     fn execute(self, hw: &mut HardwareContext) -> Result<Self::Output>;
 }
 
-//This basically simulates a Box<FnOnce(&mut HardwareContext)>
-//Unfortunately, Box<FnOnce(&mut HardwareContext)>, doesn't work yet and BoxFn is unstable
+// This basically simulates a Box<FnOnce(&mut HardwareContext)>
+// Unfortunately, Box<FnOnce(&mut HardwareContext)>, doesn't work yet and BoxFn is unstable
 struct CommandWithReturn {
     func: Box<FnMut(&mut HardwareContext) + Send>
 }
@@ -34,21 +33,21 @@ error_chain! {
     }
 }
 
-///The future used on the calling thread to get the return value from a command.
+/// The future used on the calling thread to get the return value from a command.
 ///
-///This is really just a wrapper around `futures::sync::oneshot::Receiver` which converts the
-///error into something more meaningful.
+/// This is really just a wrapper around `futures::sync::oneshot::Receiver` which converts the
+/// error into something more meaningful.
 pub struct CommandFuture<C: Command>(oneshot::Receiver<Result<C::Output>>);
 
-///The state information stored on the hardware thread.
+/// The state information stored on the hardware thread.
 ///
-///This struct also serves to ensure that hardware access occurs only on the hardware thread.
-///All of the methods to interact with the hardware are only accessible with a reference
-///to an instance of this object. To perform hardware actions on another thread, use commands.
-//right now there is no state
+/// This struct also serves to ensure that hardware access occurs only on the hardware thread.
+/// All of the methods to interact with the hardware are only accessible with a reference
+/// to an instance of this object. To perform hardware actions on another thread, use commands.
+// right now there is no state
 pub struct HardwareContext;
 
-///The object used for communicating with the HardwareContext from another thread.
+/// The object used for communicating with the HardwareContext from another thread.
 #[derive(Clone)]
 pub struct CommandSender {
     send: Sender<CommandWithReturn>
@@ -56,8 +55,8 @@ pub struct CommandSender {
 
 impl CommandWithReturn {
     fn new<F: FnOnce(&mut HardwareContext) + Send + 'static>(func: F) -> CommandWithReturn {
-        //ugly hack borrowed from
-        //https://github.com/stbuehler/rust-boxfnonce/blob/master/src/macros.rs
+        // ugly hack borrowed from
+        // https:// github.com/stbuehler/rust-boxfnonce/blob/master/src/macros.rs
         let mut func = Some(func);
         CommandWithReturn {
             func: Box::new(move |hw: &mut HardwareContext| {
@@ -95,7 +94,7 @@ impl<C: Command> Future for CommandFuture<C> {
 }
 
 impl CommandSender {
-    ///Sends a command to the hardware thread and returns a future for the return value.
+    /// Sends a command to the hardware thread and returns a future for the return value.
     fn run<C: Command + Send + 'static>(&self, command: C) -> CommandFuture<C> {
         let (sender, future) = oneshot::channel();
         self.send.send(CommandWithReturn::new(move |hardware: &mut HardwareContext| {
@@ -105,10 +104,10 @@ impl CommandSender {
     }
 }
 
-///Spawns the hardware thread.
+/// Spawns the hardware thread.
 ///
-///This will return a `CommandSender` for communicating with the hardware thread, which can be
-///cloned any number of times.
+/// This will return a `CommandSender` for communicating with the hardware thread, which can be
+/// cloned any number of times.
 fn spawn_hardware_thread() -> CommandSender {
     let (tx_command, rx_command) = channel::<CommandWithReturn>();
     thread::spawn(move || {
