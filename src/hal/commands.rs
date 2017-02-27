@@ -182,6 +182,16 @@ mod test {
             Ok(42)
         }
     }
+
+    struct DummySlowCommand;
+    impl Command for DummySlowCommand {
+        type Output = u32;
+
+        fn execute(self, hw: &mut HardwareContext) -> Result<u32, HardwareError> {
+            thread::sleep_ms(500);
+            Ok(43)
+        }
+    }
     
     struct DummyErrorCommand;
     
@@ -205,6 +215,15 @@ mod test {
         let sender = spawn_hardware_thread();
         let future = sender.run(DummyErrorCommand);
         assert!(future.wait().is_err());
+    }
+
+    #[test]
+    fn multiple_async_commands() {
+        let sender = spawn_hardware_thread();
+        let future_slow = sender.run(DummySlowCommand);
+        let future = sender.run(DummyCommand);
+        assert_eq!(future.wait().unwrap(), 42);
+        assert_eq!(future_slow.wait().unwrap(), 43);
     }
 }
 

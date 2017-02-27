@@ -14,12 +14,13 @@ addons:
       - sourceline: 'ppa:wpilib/toolchain'
     packages:
       - frc-toolchain
+      - qemu
 
 install:
   - source ~/.cargo/env
   - rustup target add arm-unknown-linux-gnueabi
-  - echo "[target.arm-unknown-linux-gnueabi]" >> ~/.cargo/config
-  - echo 'linker = "arm-frc-linux-gnueabi-gcc"' >> ~/.cargo/config
+  #- echo "[target.arm-unknown-linux-gnueabi]" >> ~/.cargo/config
+  #- echo 'linker = "arm-frc-linux-gnueabi-gcc"' >> ~/.cargo/config
 
 rust:
   - stable
@@ -29,7 +30,15 @@ matrix:
   allow_failures:
     - rust: nightly
 
+before_script:
+  - |
+      cargo install cargo-travis &&
+      export PATH=$HOME/.cargo/bin:$PATH
+
 script:
-   - cargo build --verbose
-   - cargo build --verbose --target=arm-unknown-linux-gnueabi
-#  - cargo test --verbose --target=arm-unknown-linux-gnueabi
+  - cargo build --verbose
+  - cargo build --verbose --target=arm-unknown-linux-gnueabi
+  - sh ./test.sh
+
+#after_success:
+#  - cargo coveralls --verbose --target=arm-unknown-linux-gnueabi
