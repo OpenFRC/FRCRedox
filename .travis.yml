@@ -28,6 +28,7 @@ install:
 matrix:
   include:
     - os: linux
+      dist: trusty
     - os: osx
   allow_failures:
     - rust: nightly
