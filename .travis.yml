@@ -7,6 +7,8 @@ before_install:
   - curl https://sh.rustup.rs -sSf > rustup.sh
   - chmod +x rustup.sh
   - ./rustup.sh -y
+  - cargo install clippy
+  - export PATH=$HOME/.cargo/bin:$PATH
   #- cargo install cargo-travis && export PATH=$HOME/.cargo/bin:$PATH
 
 addons:
@@ -42,4 +44,8 @@ matrix:
 
 script:
   - cd frcredox_hal; cargo build --verbose; cd ../frcredox; cargo build --verbose
-  - env CC="arm-frc-linux-gnueabi-gcc" cd frxredox_hal; cargo rustc --verbose --target=arm-unknown-linux-gnueabi --features clippy -- -D warnings; cd ../frcredox; cargo rustc --verbose --target=arm-unknown-linux-gnueabi --features clippy -- -D warnings
+  - env CC="arm-frc-linux-gnueabi-gcc" cd frxredox_hal; cargo rustc --verbose --target=arm-unknown-linux-gnueabi -- -D warnings;
+  - env CC="arm-frc-linux-gnueabi-gcc" cd frcredox; cargo rustc --verbose --target=arm-unknown-linux-gnueabi --features clippy -- -D warnings
+  - cd frcredox_hal; cargo clippy; cd ../frcredox; cargo clippy
+  - env CC="arm-frc-linux-gnueabi-gcc" cd frcredox_hal; cargo clippy --target=arm-unknown-linux-gnueabi
+  - env CC="arm-frc-linux-gnueabi-gcc" cd frcredox; cargo clippy --target=arm-unknown-linux-gnueabi
