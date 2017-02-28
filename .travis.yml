@@ -44,8 +44,8 @@ matrix:
 
 script:
   - cd frcredox_hal; cargo build --verbose; cd ../frcredox; cargo build --verbose
-  - env CC="arm-frc-linux-gnueabi-gcc" cd frxredox_hal; cargo rustc --verbose --target=arm-unknown-linux-gnueabi -- -D warnings;
-  - env CC="arm-frc-linux-gnueabi-gcc" cd frcredox; cargo rustc --verbose --target=arm-unknown-linux-gnueabi -- -D warnings
+  - cd frcredox_hal; env CC="arm-frc-linux-gnueabi-gcc" cargo rustc --verbose --target=arm-unknown-linux-gnueabi -- -D warnings;
+  - cd frcredox; env CC="arm-frc-linux-gnueabi-gcc" cargo rustc --verbose --target=arm-unknown-linux-gnueabi -- -D warnings
   - ./on_nightly "cd frcredox_hal; cargo clippy; cd ../frcredox; cargo clippy"
-  - env CC="arm-frc-linux-gnueabi-gcc" ./on_nightly "cd frcredox_hal; cargo clippy --target=arm-unknown-linux-gnueabi"
-  - env CC="arm-frc-linux-gnueabi-gcc" ./on_nightly "cd frcredox; cargo clippy --target=arm-unknown-linux-gnueabi"
+  - ./on_nightly "cd frcredox_hal; env CC=\"arm-frc-linux-gnueabi-gcc\" cargo clippy --target=arm-unknown-linux-gnueabi"
+  - ./on_nightly "cd frcredox; env CC=\"arm-frc-linux-gnueabi-gcc\" cargo clippy --target=arm-unknown-linux-gnueabi"
