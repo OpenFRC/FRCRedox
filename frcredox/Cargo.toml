@@ -1,11 +1,12 @@
 [package]
-name = "FRCRedox"
+name = "frcedox"
 version = "0.0.1"
 authors = ["OpenFRC Initiative"]
 
 [dependencies]
 futures = "^0.1"
 error-chain = "^0.10"
+gcc = "0.3"
 
 [lib]
 name = "frcredox"

@@ -1,5 +1,5 @@
 
-use ni::fpga::fpga_types;
+use ni::bindings::fpga::fpga_types;
 
 #[allow(dead_code,
         non_camel_case_types,
