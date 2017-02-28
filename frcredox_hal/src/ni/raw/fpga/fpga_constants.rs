@@ -1,10 +1,4 @@
-
-use ni::fpga::fpga_types;
-
-#[allow(dead_code,
-        non_camel_case_types,
-        non_snake_case_variables,
-        non_upper_case_globals)]
+use ni::raw::fpga::fpga_types;
 
 pub const NiFpga_False: fpga_types::NiFpga_Bool = 0;
 pub const NiFpga_True: fpga_types::NiFpga_Bool = 1;

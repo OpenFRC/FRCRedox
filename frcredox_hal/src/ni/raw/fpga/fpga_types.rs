@@ -1,9 +1,3 @@
-#![allow(dead_code,
-        non_camel_case_types,
-        non_snake_case,
-        non_upper_case_globals,
-        )]
-
 // To Keep consistent with NiFpga
 pub type int8_t = i8;
 pub type uint8_t = u8;
@@ -16,6 +10,8 @@ pub type uint32_t = u32;
 
 pub type int64_t = i64;
 pub type uint64_t = u64;
+
+pub type size_t = uint64_t;
 
 //pub type c_string = *c_char;
 
@@ -52,6 +48,7 @@ pub enum NiFpga_RunAttribute {
 #[derive(Copy, Clone)]
 #[repr(u32)]
 #[derive(Debug)]
+#[allow(identity_op)]
 pub enum NiFpga_Irq {
     NiFpga_Irq_0  = 1 << 0,
     NiFpga_Irq_1  = 1 << 1,

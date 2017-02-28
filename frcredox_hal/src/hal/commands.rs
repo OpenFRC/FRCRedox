@@ -1,4 +1,4 @@
-use std::sync::mpsc::{channel, Sender, Receiver};
+use std::sync::mpsc::{channel, Sender};
 use std::thread;
 use futures::{Future, Poll, Async};
 use futures::sync::oneshot;
@@ -47,7 +47,7 @@ pub struct CommandFuture<C: Command>(oneshot::Receiver<Result<C::Output>>);
 // right now there is no state
 pub struct HardwareContext;
 
-/// The object used for communicating with the HardwareContext from another thread.
+/// The object used for communicating with the `HardwareContext` from another thread.
 #[derive(Clone)]
 pub struct CommandSender {
     send: Sender<CommandWithReturn>
@@ -95,12 +95,14 @@ impl<C: Command> Future for CommandFuture<C> {
 
 impl CommandSender {
     /// Sends a command to the hardware thread and returns a future for the return value.
-    fn run<C: Command + Send + 'static>(&self, command: C) -> CommandFuture<C> {
+    pub fn run<C: Command + Send + 'static>(&self, command: C) -> Result<CommandFuture<C>> {
         let (sender, future) = oneshot::channel();
-        self.send.send(CommandWithReturn::new(move |hardware: &mut HardwareContext| {
+        match self.send.send(CommandWithReturn::new(move |hardware: &mut HardwareContext| {
             sender.complete(command.execute(hardware));
-        }));
-        CommandFuture(future)
+        })) {
+            Ok(_) => Ok(CommandFuture(future)),
+            Err(_) => Err(ErrorKind::HardwareThreadCrashed.into())
+        }
     }
 }
 
@@ -108,7 +110,7 @@ impl CommandSender {
 ///
 /// This will return a `CommandSender` for communicating with the hardware thread, which can be
 /// cloned any number of times.
-fn spawn_hardware_thread() -> CommandSender {
+pub fn spawn_hardware_thread() -> CommandSender {
     let (tx_command, rx_command) = channel::<CommandWithReturn>();
     thread::spawn(move || {
         let mut hardware = HardwareContext;
@@ -124,6 +126,7 @@ fn spawn_hardware_thread() -> CommandSender {
 
 #[cfg(test)]
 mod test {
+    use std::time::Duration;
     use hal::commands::*;
 
     struct DummyCommand;
@@ -131,7 +134,7 @@ mod test {
     impl Command for DummyCommand {
         type Output = u32;
 
-        fn execute(self, hw: &mut HardwareContext) -> Result<u32> {
+        fn execute(self, _: &mut HardwareContext) -> Result<u32> {
             Ok(42)
         }
     }
@@ -140,8 +143,8 @@ mod test {
     impl Command for DummySlowCommand {
         type Output = u32;
 
-        fn execute(self, hw: &mut HardwareContext) -> Result<u32> {
-            thread::sleep_ms(500);
+        fn execute(self, _: &mut HardwareContext) -> Result<u32> {
+            thread::sleep(Duration::from_millis(500));
             Ok(43)
         }
     }
@@ -151,7 +154,7 @@ mod test {
     impl Command for DummyErrorCommand {
         type Output = u32;
 
-        fn execute(self, hw: &mut HardwareContext) -> Result<u32> {
+        fn execute(self, _: &mut HardwareContext) -> Result<u32> {
             Err(ErrorKind::Unknown.into())
         }
     }
@@ -159,22 +162,22 @@ mod test {
     #[test]
     fn async_commands() {
         let sender = spawn_hardware_thread();
-        let future = sender.run(DummyCommand);
+        let future = sender.run(DummyCommand).unwrap();
         assert_eq!(future.wait().unwrap(), 42);
     }
     
     #[test]
     fn async_commands_errors() {
         let sender = spawn_hardware_thread();
-        let future = sender.run(DummyErrorCommand);
+        let future = sender.run(DummyErrorCommand).unwrap();
         assert!(future.wait().is_err());
     }
 
     #[test]
     fn multiple_async_commands() {
         let sender = spawn_hardware_thread();
-        let future_slow = sender.run(DummySlowCommand);
-        let future = sender.run(DummyCommand);
+        let future_slow = sender.run(DummySlowCommand).unwrap();
+        let future = sender.run(DummyCommand).unwrap();
         assert_eq!(future.wait().unwrap(), 42);
         assert_eq!(future_slow.wait().unwrap(), 43);
     }

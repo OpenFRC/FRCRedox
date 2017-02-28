@@ -41,5 +41,5 @@ matrix:
 #  - cargo install cargo-travis && export PATH=$HOME/.cargo/bin:$PATH
 
 script:
-  - cargo build --verbose
-  - env CC="arm-frc-linux-gnueabi-gcc" cargo build --verbose --target=arm-unknown-linux-gnueabi
+  - cd frcredox_hal; cargo build --verbose; cd ../frcredox; cargo build --verbose
+  - env CC="arm-frc-linux-gnueabi-gcc" cd frxredox_hal; cargo rustc --verbose --target=arm-unknown-linux-gnueabi --features clippy -- -D warnings; cd ../frcredox; cargo rustc --verbose --target=arm-unknown-linux-gnueabi --features clippy -- -D warnings
