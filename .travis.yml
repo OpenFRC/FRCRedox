@@ -27,7 +27,6 @@ install:
   - source ~/.cargo/env
   - rustup target add arm-unknown-linux-gnueabi
   - ./on_nightly cargo install clippy
-  - cargo install cargo-travis
   #- echo "[target.arm-unknown-linux-gnueabi]" >> ~/.cargo/config
   #- echo 'linker = "arm-frc-linux-gnueabi-gcc"' >> ~/.cargo/config
 
