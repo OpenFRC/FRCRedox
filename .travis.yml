@@ -43,7 +43,7 @@ before_script:
   - cargo install cargo-travis && export PATH=$HOME/.cargo/bin:$PATH
 
 script:
-    - cd frcredox_hal; cargo rustc --verbose -- -D warnings; cargo coverage && cd ../
+  - cd frcredox_hal; cargo rustc --verbose -- -D warnings; cargo coverage && cd ../
   - cd frcredox; cargo rustc --verbose -- -D warnings; cargo coverage && cd ../
   - cd frcredox_hal; env CC="arm-frc-linux-gnueabi-gcc" cargo rustc --verbose --target=arm-unknown-linux-gnueabi -- -D warnings && cd ../
   - cd frcredox; env CC="arm-frc-linux-gnueabi-gcc" cargo rustc --verbose --target=arm-unknown-linux-gnueabi -- -D warnings && cd ../
