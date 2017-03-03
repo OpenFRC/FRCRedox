@@ -26,6 +26,7 @@ addons:
 install:
   - source ~/.cargo/env
   - rustup target add arm-unknown-linux-gnueabi
+  - rustup override set nightly
   - ./on_nightly cargo install clippy
   #- echo "[target.arm-unknown-linux-gnueabi]" >> ~/.cargo/config
   #- echo 'linker = "arm-frc-linux-gnueabi-gcc"' >> ~/.cargo/config
