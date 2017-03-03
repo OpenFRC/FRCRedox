@@ -48,7 +48,7 @@ pub enum NiFpga_RunAttribute {
 #[derive(Copy, Clone)]
 #[repr(u32)]
 #[derive(Debug)]
-#[allow(identity_op)]
+#[cfg_attr(feature = "cargo-clippy", allow(identity_op))]
 pub enum NiFpga_Irq {
     NiFpga_Irq_0  = 1 << 0,
     NiFpga_Irq_1  = 1 << 1,
