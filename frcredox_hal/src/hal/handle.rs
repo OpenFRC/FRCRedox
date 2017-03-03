@@ -124,7 +124,7 @@ pub struct Handle {
 impl Handle {
 	/// Creates a new handle from its parts
 	pub fn new(type_byte: HandleType, index: u16) -> Handle {
-		Handle { type_byte: type_byte.into(), _padding: 0, index }
+		Handle { type_byte: type_byte.into(), _padding: 0, index: index }
 	}
 
 	/// Convert an i32 to a Handle. Unsafe, as there is no associated variant of `HandleType` for `num > 17`
@@ -185,7 +185,12 @@ impl PortHandle {
 	/// Creates a new handle from its parts
 	pub fn new(module: u8, channel: u8) -> PortHandle {
         // A `PortHandle` always has a handle type of `Port`
-		PortHandle { type_byte: HandleType::Port.into(), _padding: 0, module, channel }
+		PortHandle {
+            type_byte: HandleType::Port.into(),
+            _padding: 0,
+            module: module,
+            channel: channel
+        }
 	}
 
 	/// Convert an i32 to a Handle. Unsafe, as there is no associated variant for `num > 17`
