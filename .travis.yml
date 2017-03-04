@@ -22,7 +22,6 @@ addons:
       - cmake
       - frc-toolchain
       - qemu
-      - kcov
 
 install:
   - source ~/.cargo/env
