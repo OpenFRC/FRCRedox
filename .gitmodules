@@ -7,3 +7,6 @@
 [submodule "frcredox_hal"]
 	path = frcredox_hal
 	url = https://github.com/OpenFRC/HALRedox
+[submodule "frcredox_networktables"]
+	path = frcredox_networktables
+	url = https://www.github.com/openfrc/NetworkTablesRedox
