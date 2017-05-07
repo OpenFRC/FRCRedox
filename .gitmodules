@@ -1,0 +1,9 @@
+[submodule "HALRedux"]
+	path = HALRedux
+	url = https://github.com/OpenFRC/HALRedux
+[submodule "submodules/HALRedox"]
+	path = submodules/HALRedox
+	url = https://github.com/OpenFRC/HALRedux
+[submodule "HALRedox"]
+	path = HALRedox
+	url = https://github.com/OpenFRC/HALRedox
