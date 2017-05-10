@@ -22,6 +22,8 @@ addons:
       - cmake
       - frc-toolchain
       - qemu
+      - kcov
+
 
 install:
   - source ~/.cargo/env
@@ -43,11 +45,14 @@ before_script:
   - cargo install cargo-travis && export PATH=$HOME/.cargo/bin:$PATH
 
 script:
-  - cd frcredox_hal; cargo rustc --verbose -- -D warnings; cargo coverage && cd ../
   - cd frcredox; cargo rustc --verbose -- -D warnings; cargo coverage && cd ../
-  - cd frcredox_hal; env CC="arm-frc-linux-gnueabi-gcc" cargo rustc --verbose --target=arm-unknown-linux-gnueabi -- -D warnings && cd ../
   - cd frcredox; env CC="arm-frc-linux-gnueabi-gcc" cargo rustc --verbose --target=arm-unknown-linux-gnueabi -- -D warnings && cd ../
-  - ./on_nightly "cd frcredox_hal; cargo clippy"
+  #- ./on_nightly "cd frcredox_hal; cargo clippy"
   - ./on_nightly "cd frcredox; cargo clippy"
-  - ./on_nightly "cd frcredox_hal; env CC=\"arm-frc-linux-gnueabi-gcc\" cargo clippy --target=arm-unknown-linux-gnueabi"
+  #- ./on_nightly "cd frcredox_hal; env CC=\"arm-frc-linux-gnueabi-gcc\" cargo clippy --target=arm-unknown-linux-gnueabi"
   - ./on_nightly "cd frcredox; env CC=\"arm-frc-linux-gnueabi-gcc\" cargo clippy --target=arm-unknown-linux-gnueabi"
+
+after_success:
+  - for file in target/debug/networktablesredox-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
+  - bash <(curl -s https://codecov.io/bash) &&
+  - echo "Uploaded code coverage"
